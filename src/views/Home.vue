@@ -82,8 +82,9 @@
               <td class="is-center">{{scope.row.diePatternType}}</td>
               <td class="is-center">
                 <mu-text-field
+                  type="number"
                   v-model.number="scope.row.customQuantity"
-                  placeholder="输入定制数量(可留空)"
+                  placeholder=""
                   solo
                 />
               </td>
@@ -106,7 +107,7 @@
                   href="javascript:;"
                   small
                   color="#1565c0"
-                  @click="submitMarkingForm(scope.row)"
+                  @click="submitMarkingForm(1, scope.row)"
                   :ripple="false"
                 >
                   定制贴膜
@@ -115,6 +116,7 @@
                   href="javascript:;"
                   small
                   color="indigo400"
+                  @click="submitMarkingForm(2, scope.row)"
                   style="margin-left: 5px"
                   :ripple="false"
                 >
@@ -161,8 +163,9 @@
               <td class="is-center"><span>{{ scope.row.createdDate | parseTime('{y}-{m}-{d} {h}:{i}:{s}')}}</span></td>
               <td class="is-center">
                 <mu-tooltip placement="top" v-if="scope.row.finishedCondition.id === 1" content="继续定制">
-                  <mu-button icon color="error">
-                    <mu-icon value="computer"></mu-icon>
+                  <mu-button icon color="error" @click="goStudio(scope.row.modelType.id, scope.row)">
+                    <mu-icon value="computer" v-if="scope.row.modelType.id === 1"></mu-icon>
+                    <mu-icon v-else value="mouse"></mu-icon>
                   </mu-button>
                 </mu-tooltip>
               </td>
@@ -251,9 +254,9 @@ export default {
       ],
       columns2: [
         { title: '定制编号', name: 'customNumber', sortable: true, width: 220 },
-        { title: '品牌', name: 'computerType', align: 'center', sortable: true },
+        { title: '品牌', name: 'computerType', align: 'center', sortable: true, width: 80 },
         { title: '型号', name: 'computerMode', align: 'center', sortable: true },
-        { title: '数量', name: 'customQuantity', align: 'center', sortable: true },
+        { title: '数量', name: 'customQuantity', align: 'center', sortable: true, width: 80 },
         { title: '淘宝ID', name: 'taobaoNickname', align: 'center', sortable: true },
         { title: '收件人姓名', name: 'theRecipientName', align: 'center' },
         { title: '定制类型', name: 'modelType', align: 'center' },
@@ -284,6 +287,10 @@ export default {
     ])
   },
   created () {
+    // 第一件事情初始化鼠标垫，鼠标垫从刀模图中获取一个
+    this.getSbdInfo({ query: '鼠标垫' }).then(response => {
+      console.log('success')
+    })
     this.$nextTick(() => {
       document.querySelector('.carousel-wrapper').onclick = (evt) => {
         if (evt.target.tagName === 'IMG') {
@@ -302,6 +309,7 @@ export default {
   methods: {
     ...mapActions([
       'signOut',
+      'getSbdInfo',
       'changePassword',
       'getBookingList',
       'getBookedList',
@@ -322,6 +330,15 @@ export default {
     closeAlertDialog () {
       this.openAlert = false
       this.clear()
+    },
+    goStudio (type, row) {
+      this.$store.commit('SET_CURRENT_TYPE', type)
+      this.$store.commit('SET_TEMPLATE_ID', row.id)
+      //
+      // this.$router.push({
+      //   name: 'studio',
+      //   query: row.id
+      // })
     },
     /**
      * 查询
@@ -380,7 +397,9 @@ export default {
     /**
      * 提交`我要定制`表单
      */
-    submitMarkingForm (row) {
+    submitMarkingForm (type, row) {
+      // 设置当前操作的类型，笔记本1，鼠标垫2
+      this.$store.commit('SET_CURRENT_TYPE', type)
       this.initTemplateData(row).then((id) => {
         this.$router.push({
           name: 'studio',
