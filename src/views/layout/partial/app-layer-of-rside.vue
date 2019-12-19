@@ -1,7 +1,7 @@
 <template>
   <happy-scroll :color="scrollColor" hide-horizontal resize>
     <div id="layers">
-      <div v-for="(layer, $index) of layers" class="layer" :key="$index">
+      <div v-for="(layer, $index) of layers" class="layer" :key="$index" :sort="layer.id">
         <div class="visible">
           <mu-icon
             size="16"
@@ -19,7 +19,16 @@
           :class="activeId === layer.id ? 'active' : ''"
           @click="handleSelected(layer.id)"
         >
-          <div class="box"></div>
+          <div class="box">
+            <image-lazyload v-if="layer.name !== 'itext'"
+              :src="layer.kclass._element.src"
+              class="item-img"
+              :data-id="layer.id"
+            />
+            <div v-else class="item-text">
+              {{ layer.kclass.text.substr(0,1) }}
+            </div>
+          </div>
           <div class="text">
             {{ layer.name === 'itext'
               ? '文本' + ($index + 1)
@@ -36,10 +45,12 @@
 import { mapGetters, mapActions } from 'vuex'
 import VarMixin from '@/mixins/var.js'
 import Sortable from 'sortablejs'
+import ImageLazyload from '@/components/ImgLazyload/index.vue'
 
 export default {
   name: 'AppLayerOfRside',
   mixins: [VarMixin],
+  components: { ImageLazyload },
   props: {
     activedIndex: {
       type: String,
@@ -72,12 +83,33 @@ export default {
      * 初始化排序
      */
     initSortable () {
+      let _this = this
       this.$nextTick(() => {
         Sortable.create(document.getElementById('layers'), {
           animation: 300,
           handle: '.layer',
           easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          ghostClass: 'sortable-ghost'
+          ghostClass: 'sortable-ghost',
+          onSort: function (evt) {
+            let sortDiv = evt.target.children
+            // let newLayer = []
+            // 获取排序后的id，
+            for (let i = sortDiv.length - 1; i > 0; i--) {
+              let sortDivElement = sortDiv[i]
+              if (sortDivElement.className === 'layer') {
+                // 获取排序id
+                let sortId = sortDivElement.attributes.sort.value
+                // 获取排序对象
+                let obj = _this.getObjectById(sortId)
+                // 置顶排序元素
+                _this.bringToFront(obj)
+                // newLayer.push(sortDiv[i])
+              }
+            }
+            // console.log(_this.layers)
+            // debugger
+            // same properties as onEnd
+          }
         })
       })
     },
@@ -150,4 +182,13 @@ export default {
 .sortable-ghost {
   opacity: 0.5;
 }
+  .item-img{
+    width: 38px;
+    height: 38px;
+  }
+  .item-text{
+    margin-left: 30%;
+    line-height: 38px;
+    width: 50%;
+  }
 </style>
