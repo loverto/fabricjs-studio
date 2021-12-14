@@ -288,7 +288,7 @@ export default {
   },
   created () {
     // 第一件事情初始化鼠标垫，鼠标垫从刀模图中获取一个
-    this.getSbdInfo({ query: '鼠标垫' }).then(response => {
+    this.getSbdInfo({ query: '鼠标垫',  sort: 'id,asc'}).then(response => {
       console.log('success')
     })
     this.$nextTick(() => {
